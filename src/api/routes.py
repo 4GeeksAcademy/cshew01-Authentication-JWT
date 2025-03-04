@@ -18,6 +18,8 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+
+
 @api.route("/login", methods=['POST'])
 def login():
     body = request.get_json(force=True) 
@@ -38,6 +40,26 @@ def login():
         )
     )
 
+@api.route("/signup", methods=['POST'])
+def signup():
+    body = request.get_json(force=True) 
+
+    user = User.query.filter_by(email=body.get('email')).first()
+
+    if user:
+        return jsonify(
+            msg="User email already exists"
+        ), 400
+
+    user = User(**body)
+
+    db.session.add(user)
+    db.session.commit()
+    db.session.refresh(user)
+
+    return jsonify(user.serialize())
+
+
 @api.route("/secured", methods=['GET'])
 @jwt_required()
 def secured():
@@ -46,14 +68,6 @@ def secured():
     )
 
 
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
-
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
-
-    return jsonify(response_body), 200
 
 # @api.route('/user', methods=['POST'])
 # def create_user():
